@@ -1,0 +1,38 @@
+name: Build Hesab Desk Windows
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests
+          # اگر پروژه به ابزار خاصی نیاز دارد اینجا اضافه کنید
+
+      - name: Build Hesab Desk
+        run: python build.py --flutter
+
+      - name: Upload EXE Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Hesab-Desk-Windows
+          path: flutter/build/windows/x64/runner/Release/
