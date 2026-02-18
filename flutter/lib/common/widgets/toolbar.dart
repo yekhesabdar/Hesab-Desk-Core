@@ -3,15 +3,15 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hbb/common.dart';
-import 'package:flutter_hbb/common/shared_state.dart';
-import 'package:flutter_hbb/common/widgets/dialog.dart';
-import 'package:flutter_hbb/common/widgets/login.dart';
-import 'package:flutter_hbb/consts.dart';
-import 'package:flutter_hbb/desktop/widgets/remote_toolbar.dart';
-import 'package:flutter_hbb/models/model.dart';
-import 'package:flutter_hbb/models/platform_model.dart';
-import 'package:flutter_hbb/utils/multi_window_manager.dart';
+import 'package:hesab_desk/common.dart';
+import 'package:hesab_desk/common/shared_state.dart';
+import 'package:hesab_desk/common/widgets/dialog.dart';
+import 'package:hesab_desk/common/widgets/login.dart';
+import 'package:hesab_desk/consts.dart';
+import 'package:hesab_desk/desktop/widgets/remote_toolbar.dart';
+import 'package:hesab_desk/models/model.dart';
+import 'package:hesab_desk/models/platform_model.dart';
+import 'package:hesab_desk/utils/multi_window_manager.dart';
 import 'package:get/get.dart';
 
 bool isEditOsPassword = false;

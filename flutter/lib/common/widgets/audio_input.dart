@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hbb/common.dart';
-import 'package:flutter_hbb/models/platform_model.dart';
+import 'package:hesab_desk/common.dart';
+import 'package:hesab_desk/models/platform_model.dart';
 
 const _kSystemSound = 'System Sound';
 
