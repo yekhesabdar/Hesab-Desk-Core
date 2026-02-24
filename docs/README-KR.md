@@ -5,7 +5,7 @@
   <a href="#파일 구조">구조</a> •
   <a href="#스크린샷">스냇샷</a><br>
   [<a href="../README.md">English</a>] | [<a href="README-UA.md">Українська</a>] | [<a href="README-CS.md">česky</a>] | [<a href="README-ZH.md">中文</a>] | [<a href="README-HU.md">Magyar</a>] | [<a href="README-ES.md">Español</a>] | [<a href="README-FA.md">فارسی</a>] | [<a href="README-FR.md">Français</a>] | [<a href="README-DE.md">Deutsch</a>] | [<a href="README-PL.md">Polski</a>] | [<a href="README-ID.md">Indonesian</a>] | [<a href="README-FI.md">Suomi</a>] | [<a href="README-ML.md">മലയാളം</a>] | [<a href="README-JP.md">日本語</a>] | [<a href="README-NL.md">Nederlands</a>] | [<a href="README-IT.md">Italiano</a>] | [<a href="README-RU.md">Русский</a>] | [<a href="README-PTBR.md">Português (Brasil)</a>] | [<a href="README-EO.md">Esperanto</a>] | [<a href="README-KR.md">한국어</a>] | [<a href="README-AR.md">العربي</a>] | [<a href="README-VN.md">Tiếng Việt</a>] | [<a href="README-DA.md">Dansk</a>] | [<a href="README-GR.md">Ελληνικά</a>] | [<a href="README-TR.md">Türkçe</a>] | [<a href="README-NO.md">Norsk</a>]<br>
-  <b>이 README, <a href="https://github.com/hesabdesk/hesabdesk/tree/master/src/lang">HesabDesk UI</a> 및 <a href="https://github.com/hesabdesk/doc.hesabdesk.com">HesabDesk 문서</a>를 귀하의 모국어로 번역하는 데 도움이 필요합니다</b>
+  <b>이 README, <a href="https://github.com/rustdesk/rustdesk/tree/master/src/lang">HesabDesk UI</a> 및 <a href="https://github.com/rustdesk/doc.hesabdesk.com">HesabDesk 문서</a>를 귀하의 모국어로 번역하는 데 도움이 필요합니다</b>
 </p>
 
 > [!Caution]
@@ -17,17 +17,17 @@
 
 [![HesabDesk Server Pro](https://img.shields.io/badge/HesabDesk%20Server%20Pro-%EA%B3%A0%EA%B8%89%20%EA%B8%B0%EB%8A%A5-blue)](https://hesabdesk.com/pricing.html)
 
-또 하나의 원격 데스크톱 솔루션으로, Rust로 작성되었습니다. 별도의 설정 없이 바로 사용할 수 있습니다. 데이터에 대한 완전한 통제권을 가지며 보안에 대한 걱정이 없습니다. 저희 랑데부/릴레이 서버를 사용하거나, [직접 설정](https://hesabdesk.com/server)하거나, [자신만의 랑데부/릴레이 서버를 작성](https://github.com/hesabdesk/hesabdesk-server-demo)할 수 있습니다.
+또 하나의 원격 데스크톱 솔루션으로, Rust로 작성되었습니다. 별도의 설정 없이 바로 사용할 수 있습니다. 데이터에 대한 완전한 통제권을 가지며 보안에 대한 걱정이 없습니다. 저희 랑데부/릴레이 서버를 사용하거나, [직접 설정](https://hesabdesk.com/server)하거나, [자신만의 랑데부/릴레이 서버를 작성](https://github.com/rustdesk/rustdesk-server-demo)할 수 있습니다.
 
 ![image](https://user-images.githubusercontent.com/71636191/171661982-430285f0-2e12-4b1d-9957-4a58e375304d.png)
 
 HesabDesk는 모든 분들의 기여를 환영합니다. 시작하는 데 도움이 필요하면 [CONTRIBUTING-KR.md](CONTRIBUTING-KR.md)를 참조하세요.
 
-[**자주 묻는 질문**](https://github.com/hesabdesk/hesabdesk/wiki/FAQ)
+[**자주 묻는 질문**](https://github.com/rustdesk/rustdesk/wiki/FAQ)
 
-[**바이너리 다운로드**](https://github.com/hesabdesk/hesabdesk/releases)
+[**바이너리 다운로드**](https://github.com/rustdesk/rustdesk/releases)
 
-[**개발자 빌드**](https://github.com/hesabdesk/hesabdesk/releases/tag/nightly)
+[**개발자 빌드**](https://github.com/rustdesk/rustdesk/releases/tag/nightly)
 
 [<img src="https://f-droid.org/badge/get-it-on.png"
     alt="Get it on F-Droid"
@@ -38,7 +38,7 @@ HesabDesk는 모든 분들의 기여를 환영합니다. 시작하는 데 도움
 
 ## 종속성
 
-데스크톱 버전은 GUI로 Flutter 또는 Sciter (더 이상 지원되지 않음)를 사용하며, 이 자습서는 시작하기 더 쉽고 친숙한 Sciter 전용입니다. Flutter 버전 빌드는 [CI](https://github.com/hesabdesk/hesabdesk/blob/master/.github/workflows/flutter-build.yml)을 확인하세요.
+데스크톱 버전은 GUI로 Flutter 또는 Sciter (더 이상 지원되지 않음)를 사용하며, 이 자습서는 시작하기 더 쉽고 친숙한 Sciter 전용입니다. Flutter 버전 빌드는 [CI](https://github.com/rustdesk/rustdesk/blob/master/.github/workflows/flutter-build.yml)을 확인하세요.
 
 Sciter 동적 라이브러리를 직접 다운로드하세요.
 
@@ -117,7 +117,7 @@ cd
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
-git clone --recurse-submodules https://github.com/hesabdesk/hesabdesk
+git clone --recurse-submodules https://github.com/rustdesk/rustdesk
 cd hesabdesk
 mkdir -p target/debug
 wget https://raw.githubusercontent.com/c-smile/sciter-sdk/master/bin.lnx/x64/libsciter-gtk.so
@@ -130,7 +130,7 @@ VCPKG_ROOT=$HOME/vcpkg cargo run
 먼저 리포지토리를 복제하고 Docker 컨테이너를 빌드합니다:
 
 ```sh
-git clone https://github.com/hesabdesk/hesabdesk
+git clone https://github.com/rustdesk/rustdesk
 cd hesabdesk
 git submodule update --init --recursive
 docker build -t "hesabdesk-builder" .
@@ -158,25 +158,25 @@ HesabDesk 리포지토리의 루트에서 이러한 명령을 실행하고 있�
 
 ## 파일 구조
 
-- **[libs/hbb_common](https://github.com/hesabdesk/hesabdesk/tree/master/libs/hbb_common)**: 비디오 코덱, 구성, tcp/udp wrapper, protobuf, 파일 전송을 위한 fs 함수 및 기타 유틸리티 함수
-- **[libs/scrap](https://github.com/hesabdesk/hesabdesk/tree/master/libs/scrap)**: 화면 캡쳐
-- **[libs/enigo](https://github.com/hesabdesk/hesabdesk/tree/master/libs/enigo)**: 플랫폼별 키보드/마우스 제어
-- **[libs/clipboard](https://github.com/hesabdesk/hesabdesk/tree/master/libs/clipboard)**: Windows, Linux, macOS용 파일 복사 및 붙여넣기 구현
-- **[src/ui](https://github.com/hesabdesk/hesabdesk/tree/master/src/ui)**: 더 이상 사용되지 않는 Sciter UI (지원 중단)
-- **[src/server](https://github.com/hesabdesk/hesabdesk/tree/master/src/server)**: 오디오/클립보드/입력/비디오 서비스 및 네트워크 연결
-- **[src/client.rs](https://github.com/hesabdesk/hesabdesk/tree/master/src/client.rs)**: 피어 연결 시작
-- **[src/rendezvous_mediator.rs](https://github.com/hesabdesk/hesabdesk/tree/master/src/rendezvous_mediator.rs)**: [hesabdesk-server](https://github.com/hesabdesk/hesabdesk-server)와 통신, 원격 다이렉트 (TCP 홀 펀칭) 또는 릴레이 연결 대기
-- **[src/platform](https://github.com/hesabdesk/hesabdesk/tree/master/src/platform)**: 플랫폼별 코드
-- **[flutter](https://github.com/hesabdesk/hesabdesk/tree/master/flutter)**: 데스크톱 및 모바일용 Flutter 코드
-- **[flutter/web/js](https://github.com/hesabdesk/hesabdesk/tree/master/flutter/web/v1/js)**: Flutter 웹 클라이언트용 JavaScript
+- **[libs/hbb_common](https://github.com/rustdesk/rustdesk/tree/master/libs/hbb_common)**: 비디오 코덱, 구성, tcp/udp wrapper, protobuf, 파일 전송을 위한 fs 함수 및 기타 유틸리티 함수
+- **[libs/scrap](https://github.com/rustdesk/rustdesk/tree/master/libs/scrap)**: 화면 캡쳐
+- **[libs/enigo](https://github.com/rustdesk/rustdesk/tree/master/libs/enigo)**: 플랫폼별 키보드/마우스 제어
+- **[libs/clipboard](https://github.com/rustdesk/rustdesk/tree/master/libs/clipboard)**: Windows, Linux, macOS용 파일 복사 및 붙여넣기 구현
+- **[src/ui](https://github.com/rustdesk/rustdesk/tree/master/src/ui)**: 더 이상 사용되지 않는 Sciter UI (지원 중단)
+- **[src/server](https://github.com/rustdesk/rustdesk/tree/master/src/server)**: 오디오/클립보드/입력/비디오 서비스 및 네트워크 연결
+- **[src/client.rs](https://github.com/rustdesk/rustdesk/tree/master/src/client.rs)**: 피어 연결 시작
+- **[src/rendezvous_mediator.rs](https://github.com/rustdesk/rustdesk/tree/master/src/rendezvous_mediator.rs)**: [hesabdesk-server](https://github.com/rustdesk/rustdesk-server)와 통신, 원격 다이렉트 (TCP 홀 펀칭) 또는 릴레이 연결 대기
+- **[src/platform](https://github.com/rustdesk/rustdesk/tree/master/src/platform)**: 플랫폼별 코드
+- **[flutter](https://github.com/rustdesk/rustdesk/tree/master/flutter)**: 데스크톱 및 모바일용 Flutter 코드
+- **[flutter/web/js](https://github.com/rustdesk/rustdesk/tree/master/flutter/web/v1/js)**: Flutter 웹 클라이언트용 JavaScript
 
 ## 스크린샷
 
-![Connection Manager](https://github.com/hesabdesk/hesabdesk/assets/28412477/db82d4e7-c4bc-4823-8e6f-6af7eadf7651)
+![Connection Manager](https://github.com/rustdesk/rustdesk/assets/28412477/db82d4e7-c4bc-4823-8e6f-6af7eadf7651)
 
-![Connected to a Windows PC](https://github.com/hesabdesk/hesabdesk/assets/28412477/9baa91e9-3362-4d06-aa1a-7518edcbd7ea)
+![Connected to a Windows PC](https://github.com/rustdesk/rustdesk/assets/28412477/9baa91e9-3362-4d06-aa1a-7518edcbd7ea)
 
-![File Transfer](https://github.com/hesabdesk/hesabdesk/assets/28412477/39511ad3-aa9a-4f8c-8947-1cce286a46ad)
+![File Transfer](https://github.com/rustdesk/rustdesk/assets/28412477/39511ad3-aa9a-4f8c-8947-1cce286a46ad)
 
-![TCP Tunneling](https://github.com/hesabdesk/hesabdesk/assets/28412477/78e8708f-e87e-4570-8373-1360033ea6c5)
+![TCP Tunneling](https://github.com/rustdesk/rustdesk/assets/28412477/78e8708f-e87e-4570-8373-1360033ea6c5)
 

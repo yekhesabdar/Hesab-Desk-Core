@@ -7,7 +7,7 @@
   <a href="#سرورهای-عمومی-رایگان">سرور</a>
 </p>
 <p align="center" dir="auto">[<a href="../README.md">English</a>] | [<a href="README-UA.md">Українська</a>] | [<a href="README-CS.md">česky</a>] | [<a href="README-ZH.md">中文</a>] | [<a href="README-HU.md">Magyar</a>] | [<a href="README-ES.md">Español</a>] | [<a href="README-FR.md">Français</a>] | [<a href="README-DE.md">Deutsch</a>] | [<a href="README-PL.md">Polski</a>] | [<a href="README-ID.md">Indonesian</a>] | [<a href="README-FI.md">Suomi</a>] | [<a href="README-ML.md">മലയാളം</a>] | [<a href="README-JP.md">日本語</a>] | [<a href="README-NL.md">Nederlands</a>] | [<a href="README-IT.md">Italiano</a>] | [<a href="README-RU.md">Русский</a>] | [<a href="README-PTBR.md">Português (Brasil)</a>] | [<a href="README-EO.md">Esperanto</a>] | [<a href="README-KR.md">한국어</a>] | [<a href="README-AR.md">العربي</a>] | [<a href="README-VN.md">Tiếng Việt</a>] | [<a href="README-GR.md">Ελληνικά</a>]</p>
-<p dir="rtl" align="center"><b>برای ترجمه این سند (README)، <a href="https://github.com/hesabdesk/hesabdesk/tree/master/src/lang" dir="rtl">رابط کاربری HesabDesk</a>، <a href="https://github.com/hesabdesk/doc.hesabdesk.com" dir="rtl">و مستندات آن</a> به زبان مادری شما به کمکتان نیازمندیم. </b></p>
+<p dir="rtl" align="center"><b>برای ترجمه این سند (README)، <a href="https://github.com/rustdesk/rustdesk/tree/master/src/lang" dir="rtl">رابط کاربری HesabDesk</a>، <a href="https://github.com/rustdesk/doc.hesabdesk.com" dir="rtl">و مستندات آن</a> به زبان مادری شما به کمکتان نیازمندیم. </b></p>
 
 با ما گفتگو کنید:  [Reddit](https://www.reddit.com/r/hesabdesk) | [Twitter](https://twitter.com/hesabdesk) | [Discord](https://discord.gg/nDceKgxnkV) | [YouTube](https://www.youtube.com/@hesabdesk) 
 
@@ -17,13 +17,13 @@
 راست‌دسک (HesabDesk) نرم‌افزاری برای کارکردن با رایانه‌ی رومیزی از راه دور است و با زبان برنامه‌نویسی Rust نوشته شده است. نیاز به تنظیمات چندانی ندارد و شما را قادر می سازد تا بدون نگرانی از امنیت اطلاعات خود بر آن‌ها کنترل کامل داشته باشید.
 
 می‌توانید از سرور rendezvous/relay ما استفاده کنید، [سرور خودتان را راه‌اندازی کنید](https://hesabdesk.com/server) یا
-[ سرورrendezvous/relay  خود را بنویسید](https://github.com/hesabdesk/hesabdesk).
+[ سرورrendezvous/relay  خود را بنویسید](https://github.com/rustdesk/rustdesk).
 
 ما از مشارکت همه استقبال می کنیم. برای راهنمایی جهت مشارکت به[`docs/CONTRIBUTING.md`](CONTRIBUTING.md) مراجعه کنید.
 
-[راست‌دسک چطور کار می کند؟](https://github.com/hesabdesk/hesabdesk/wiki/How-does-HesabDesk-work%3F)
+[راست‌دسک چطور کار می کند؟](https://github.com/rustdesk/rustdesk/wiki/How-does-HesabDesk-work%3F)
 
-[دریافت نرم‌افزار](https://github.com/hesabdesk/hesabdesk/releases)
+[دریافت نرم‌افزار](https://github.com/rustdesk/rustdesk/releases)
 
 ## وابستگی ها
 
@@ -97,7 +97,7 @@ cd
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
-git clone https://github.com/hesabdesk/hesabdesk
+git clone https://github.com/rustdesk/rustdesk
 cd hesabdesk
 mkdir -p target/debug
 wget https://raw.githubusercontent.com/c-smile/sciter-sdk/master/bin.lnx/x64/libsciter-gtk.so
@@ -110,7 +110,7 @@ VCPKG_ROOT=$HOME/vcpkg cargo run
 این مخزن Git را دریافت کنید و کانتینر را به روش زیر بسازید
 
 ```sh
-git clone https://github.com/hesabdesk/hesabdesk
+git clone https://github.com/rustdesk/rustdesk
 cd hesabdesk
 docker build -t "hesabdesk-builder" .
 ```
@@ -137,16 +137,16 @@ target/release/hesabdesk
 
 ## ساختار پوشه ها 
 
-- **[libs/hbb_common](https://github.com/hesabdesk/hesabdesk/tree/master/libs/hbb_common)**: video codec, config, tcp/udp wrapper, protobuf, fs functions for file transfer, and some other utility functions
-- **[libs/scrap](https://github.com/hesabdesk/hesabdesk/tree/master/libs/scrap)**: screen capture
-- **[libs/enigo](https://github.com/hesabdesk/hesabdesk/tree/master/libs/enigo)**: platform specific keyboard/mouse control
-- **[src/ui](https://github.com/hesabdesk/hesabdesk/tree/master/src/ui)**: GUI
-- **[src/server](https://github.com/hesabdesk/hesabdesk/tree/master/src/server)**: audio/clipboard/input/video services, and network connections
-- **[src/client.rs](https://github.com/hesabdesk/hesabdesk/tree/master/src/client.rs)**: start a peer connection
-- **[src/rendezvous_mediator.rs](https://github.com/hesabdesk/hesabdesk/tree/master/src/rendezvous_mediator.rs)**: Communicate with [hesabdesk-server](https://github.com/hesabdesk/hesabdesk-server), wait for remote direct (TCP hole punching) or relayed connection
-- **[src/platform](https://github.com/hesabdesk/hesabdesk/tree/master/src/platform)**: platform specific code
-- **[flutter](https://github.com/hesabdesk/hesabdesk/tree/master/flutter)**: Flutter code for mobile
-- **[flutter/web/js](https://github.com/hesabdesk/hesabdesk/tree/master/flutter/web/js)**: Javascript for Flutter web client
+- **[libs/hbb_common](https://github.com/rustdesk/rustdesk/tree/master/libs/hbb_common)**: video codec, config, tcp/udp wrapper, protobuf, fs functions for file transfer, and some other utility functions
+- **[libs/scrap](https://github.com/rustdesk/rustdesk/tree/master/libs/scrap)**: screen capture
+- **[libs/enigo](https://github.com/rustdesk/rustdesk/tree/master/libs/enigo)**: platform specific keyboard/mouse control
+- **[src/ui](https://github.com/rustdesk/rustdesk/tree/master/src/ui)**: GUI
+- **[src/server](https://github.com/rustdesk/rustdesk/tree/master/src/server)**: audio/clipboard/input/video services, and network connections
+- **[src/client.rs](https://github.com/rustdesk/rustdesk/tree/master/src/client.rs)**: start a peer connection
+- **[src/rendezvous_mediator.rs](https://github.com/rustdesk/rustdesk/tree/master/src/rendezvous_mediator.rs)**: Communicate with [hesabdesk-server](https://github.com/rustdesk/rustdesk-server), wait for remote direct (TCP hole punching) or relayed connection
+- **[src/platform](https://github.com/rustdesk/rustdesk/tree/master/src/platform)**: platform specific code
+- **[flutter](https://github.com/rustdesk/rustdesk/tree/master/flutter)**: Flutter code for mobile
+- **[flutter/web/js](https://github.com/rustdesk/rustdesk/tree/master/flutter/web/js)**: Javascript for Flutter web client
 
 ## تصاویر محیط نرم‌افزار
 

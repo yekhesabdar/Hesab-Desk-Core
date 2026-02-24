@@ -6,7 +6,7 @@
   <a href="#file-structure">Structure</a> •
   <a href="#snapshot">Snapshot</a><br>
   [<a href="../README.md">English</a>] | [<a href="README-UA.md">Українська</a>] | [<a href="README-CS.md">česky</a>] | [<a href="README-ZH.md">中文</a>] | [<a href="README-HU.md">Magyar</a>] | [<a href="README-ES.md">Español</a>] | [<a href="README-FA.md">فارسی</a>] | [<a href="README-FR.md">Français</a>] | [<a href="README-DE.md">Deutsch</a>] | [<a href="README-PL.md">Polski</a>] | [<a href="README-ID.md">Indonesian</a>] | [<a href="README-FI.md">Suomi</a>] | [<a href="README-ML.md">മലയാളം</a>] | [<a href="README-JP.md">日本語</a>] | [<a href="README-NL.md">Nederlands</a>] | [<a href="README-IT.md">Italiano</a>] | [<a href="README-RU.md">Русский</a>] | [<a href="README-PTBR.md">Português (Brasil)</a>] | [<a href="README-EO.md">Esperanto</a>] | [<a href="README-KR.md">한국어</a>] | [<a href="README-VN.md">Tiếng Việt</a>] | [<a href="README-GR.md">Ελληνικά</a>]<br>
-  <b>  لغتك الأم,  <a href="https://github.com/hesabdesk/doc.hesabdesk.com">Doc</a> و <a href="https://github.com/hesabdesk/hesabdesk/tree/master/src/lang">HesabDesk UI</a>, README نحن بحاجة إلى مساعدتك لترجمة هذا </b>
+  <b>  لغتك الأم,  <a href="https://github.com/rustdesk/doc.hesabdesk.com">Doc</a> و <a href="https://github.com/rustdesk/rustdesk/tree/master/src/lang">HesabDesk UI</a>, README نحن بحاجة إلى مساعدتك لترجمة هذا </b>
 </p>
 
 [Discord](https://discord.gg/nDceKgxnkV) | [Twitter](https://twitter.com/hesabdesk) | [Reddit](https://www.reddit.com/r/hesabdesk) | [YouTube](https://www.youtube.com/@hesabdesk) :تواصل معنا عبر
@@ -17,15 +17,15 @@
 يعمل خارج الصندوق، لا حاجة إلى إعدادات. لديك سيطرة كاملة على بياناتك، دون مخاوف بشأن الأمن. يمكنك استخدام خادم
   الخاص بنا rendezvous/relay
 [جهز لنفسك واحدا](https://hesabdesk.com/server), أو
-[خاص بك rendezvous/relay أكتب خادم](https://github.com/hesabdesk/hesabdesk-server-demo).
+[خاص بك rendezvous/relay أكتب خادم](https://github.com/rustdesk/rustdesk-server-demo).
 
 ![image](https://user-images.githubusercontent.com/71636191/171661982-430285f0-2e12-4b1d-9957-4a58e375304d.png)
 
 لمساعدتك على ذلك [`docs/CONTRIBUTING.md`](CONTRIBUTING.md) يرحب بمساهمة الجميع. اطلع على  HesabDesk.
 
-[**؟ HesabDesk كيفية يعمل**](https://github.com/hesabdesk/hesabdesk/wiki/How-does-HesabDesk-work%3F)
+[**؟ HesabDesk كيفية يعمل**](https://github.com/rustdesk/rustdesk/wiki/How-does-HesabDesk-work%3F)
 
-[**BINARY تنزيل**](https://github.com/hesabdesk/hesabdesk/releases)
+[**BINARY تنزيل**](https://github.com/rustdesk/rustdesk/releases)
 
 
 ## التبعيات
@@ -103,7 +103,7 @@ cd
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
-git clone https://github.com/hesabdesk/hesabdesk
+git clone https://github.com/rustdesk/rustdesk
 cd hesabdesk
 mkdir -p target/debug
 wget https://raw.githubusercontent.com/c-smile/sciter-sdk/master/bin.lnx/x64/libsciter-gtk.so
@@ -116,7 +116,7 @@ VCPKG_ROOT=$HOME/vcpkg cargo run
 ابدأ باستنساخ المستودع وبناء الكونتاينر:
 
 ```sh
-git clone https://github.com/hesabdesk/hesabdesk
+git clone https://github.com/rustdesk/rustdesk
 cd hesabdesk
 docker build -t "hesabdesk-builder" .
 ```
@@ -150,17 +150,17 @@ HesabDesk يرجى التأكد من أنك تنفذ هذه الأوامر من 
 
 ## هيكل الملف
 
-- **[libs/hbb_common](https://github.com/hesabdesk/hesabdesk/tree/master/libs/hbb_common)**: وظائف  لنقل الملفات، وبعض وظائف المرافق الأخرى tcp/udp، protobuf ترميز الفيديو، إعدادات
+- **[libs/hbb_common](https://github.com/rustdesk/rustdesk/tree/master/libs/hbb_common)**: وظائف  لنقل الملفات، وبعض وظائف المرافق الأخرى tcp/udp، protobuf ترميز الفيديو، إعدادات
 
-- **[libs/scrap](https://github.com/hesabdesk/hesabdesk/tree/master/libs/scrap)**: التقاط الشاشة
-- **[libs/enigo](https://github.com/hesabdesk/hesabdesk/tree/master/libs/enigo)**: التحكم في لوحة المفاتيح/الماوس الخاصة بكل منصة
-- **[src/ui](https://github.com/hesabdesk/hesabdesk/tree/master/src/ui)**: واجهة المستخدم الرسومية
-- **[src/server](https://github.com/hesabdesk/hesabdesk/tree/master/src/server)**: خدمات الصوت/الحافظة/المدخلات/الفيديو، ووصلات الشبكة
-- **[src/client.rs](https://github.com/hesabdesk/hesabdesk/tree/master/src/client.rs)**: بدء اتصال متقارن
-- **[src/rendezvous_mediator.rs](https://github.com/hesabdesk/hesabdesk/tree/master/src/rendezvous_mediator.rs)**: أو المنقول عن بُعد (TCP hole punching) انتظر الاتصال المباشر [hesabdesk-server](https://github.com/hesabdesk/hesabdesk-server) الإتصال ب
-- **[src/platform](https://github.com/hesabdesk/hesabdesk/tree/master/src/platform)**: رمز خاص بكل منصة
-- **[flutter](https://github.com/hesabdesk/hesabdesk/tree/master/flutter)**: رمز الهاتف المحمول
-- **[flutter/web/js](https://github.com/hesabdesk/hesabdesk/tree/master/flutter/web/js)**:Flutter  لعميل الويب الخاص ب Javascript
+- **[libs/scrap](https://github.com/rustdesk/rustdesk/tree/master/libs/scrap)**: التقاط الشاشة
+- **[libs/enigo](https://github.com/rustdesk/rustdesk/tree/master/libs/enigo)**: التحكم في لوحة المفاتيح/الماوس الخاصة بكل منصة
+- **[src/ui](https://github.com/rustdesk/rustdesk/tree/master/src/ui)**: واجهة المستخدم الرسومية
+- **[src/server](https://github.com/rustdesk/rustdesk/tree/master/src/server)**: خدمات الصوت/الحافظة/المدخلات/الفيديو، ووصلات الشبكة
+- **[src/client.rs](https://github.com/rustdesk/rustdesk/tree/master/src/client.rs)**: بدء اتصال متقارن
+- **[src/rendezvous_mediator.rs](https://github.com/rustdesk/rustdesk/tree/master/src/rendezvous_mediator.rs)**: أو المنقول عن بُعد (TCP hole punching) انتظر الاتصال المباشر [hesabdesk-server](https://github.com/rustdesk/rustdesk-server) الإتصال ب
+- **[src/platform](https://github.com/rustdesk/rustdesk/tree/master/src/platform)**: رمز خاص بكل منصة
+- **[flutter](https://github.com/rustdesk/rustdesk/tree/master/flutter)**: رمز الهاتف المحمول
+- **[flutter/web/js](https://github.com/rustdesk/rustdesk/tree/master/flutter/web/js)**:Flutter  لعميل الويب الخاص ب Javascript
 
 ## لقطات
 

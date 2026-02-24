@@ -190,7 +190,7 @@ pub fn translate_locale(name: String, locale: &str) -> String {
                 if !app_name.contains("HesabDesk") {
                     s = s.replace("HesabDesk", &app_name);
                 } else {
-                    // https://github.com/hesabdesk/hesabdesk-server-pro/issues/845
+                    // https://github.com/rustdesk/rustdesk-server-pro/issues/845
                     // If app_name contains "HesabDesk" (e.g., "HesabDesk-Admin"), we need to avoid
                     // replacing "HesabDesk" within the already-substituted app_name, which would
                     // cause duplication like "HesabDesk-Admin" -> "HesabDesk-Admin-Admin".

@@ -27,15 +27,15 @@ g_arpsystemcomponent = {
     },
     "Contact": {
         "msi": "ARPCONTACT",
-        "v": "https://github.com/hesabdesk/hesabdesk",
+        "v": "https://github.com/rustdesk/rustdesk",
     },
     "HelpLink": {
         "msi": "ARPHELPLINK",
-        "v": "https://github.com/hesabdesk/hesabdesk/issues/",
+        "v": "https://github.com/rustdesk/rustdesk/issues/",
     },
     "ReadMe": {
         "msi": "ARPREADME",
-        "v": "https://github.com/hesabdesk/hesabdesk",
+        "v": "https://github.com/rustdesk/rustdesk",
     },
 }
 

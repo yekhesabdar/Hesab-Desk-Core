@@ -24,7 +24,7 @@ Pentru instrucțiuni specifice git, vezi [GitHub workflow 101](https://github.co
 
 ## Conduită
 
-[Codul de Conduită HesabDesk](https://github.com/hesabdesk/hesabdesk/blob/master/docs/CODE_OF_CONDUCT.md)
+[Codul de Conduită HesabDesk](https://github.com/rustdesk/rustdesk/blob/master/docs/CODE_OF_CONDUCT.md)
 
 ## Comunicare
 

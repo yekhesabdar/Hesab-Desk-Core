@@ -39,13 +39,13 @@
     <color type="primary" scheme_preference="dark">#0160ee</color>
   </branding>
   <url type="homepage">https://hesabdesk.com</url>
-  <url type="bugtracker">https://github.com/hesabdesk/hesabdesk/issues</url>
-  <url type="faq">https://github.com/hesabdesk/hesabdesk/wiki/FAQ</url>
+  <url type="bugtracker">https://github.com/rustdesk/rustdesk/issues</url>
+  <url type="faq">https://github.com/rustdesk/rustdesk/wiki/FAQ</url>
   <url type="help">https://hesabdesk.com/docs</url>
   <url type="donation">https://ko-fi.com/hesabdesk</url>
-  <url type="vcs-browser">https://github.com/hesabdesk/hesabdesk</url>
-  <url type="translate">https://github.com/hesabdesk/hesabdesk/tree/master/src/lang</url>
-  <url type="contribute">https://github.com/hesabdesk/hesabdesk/blob/master/docs/CONTRIBUTING.md</url>
+  <url type="vcs-browser">https://github.com/rustdesk/rustdesk</url>
+  <url type="translate">https://github.com/rustdesk/rustdesk/tree/master/src/lang</url>
+  <url type="contribute">https://github.com/rustdesk/rustdesk/blob/master/docs/CONTRIBUTING.md</url>
   <url type="contact">https://hesabdesk.com/docs/en/technical-support</url>
   <requires>
     <display_length compare="ge">600</display_length>

@@ -11,8 +11,8 @@
 #
 # It accepts the following arguments:
 #
-# - versionName from https://github.com/hesabdesk/hesabdesk/releases/download/fdroid-version/hesabdesk-version.txt
-# - versionCode from https://github.com/hesabdesk/hesabdesk/releases/download/fdroid-version/hesabdesk-version.txt
+# - versionName from https://github.com/rustdesk/rustdesk/releases/download/fdroid-version/hesabdesk-version.txt
+# - versionCode from https://github.com/rustdesk/rustdesk/releases/download/fdroid-version/hesabdesk-version.txt
 # - Android architecture to build APK for: armeabi-v7a arm64-v8av x86 x86_64
 # - The build step to execute:
 #
