@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=HesabDesk
+NoDisplay=true
+MimeType=x-scheme-handler/hesabdesk;
+TryExec=hesabdesk
+Exec=hesabdesk %u
+Icon=hesabdesk
+Terminal=false
+Type=Application
+StartupNotify=false
+StartupWMClass=hesabdesk
