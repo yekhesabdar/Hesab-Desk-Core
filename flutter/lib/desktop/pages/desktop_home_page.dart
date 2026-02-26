@@ -238,7 +238,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                         readOnly: true,
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.only(top: 10, bottom: 10),
+                          contentPadding: EdgeInsets.only(top: 10, bottom: 10, left: 7),
                         ),
                         style: TextStyle(
                           fontSize: 22,
@@ -336,7 +336,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               contentPadding:
-                                  EdgeInsets.only(top: 14, bottom: 10),
+                                  EdgeInsets.only(top: 14, bottom: 10, left: 7),
                             ),
                             style: TextStyle(fontSize: 15),
                           ).workaroundFreezeLinuxMint(),
