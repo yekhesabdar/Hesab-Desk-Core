@@ -1,6 +1,6 @@
 # Contributing to HesabDesk
 
-HesabDesk welcomes contribution from everyone. Here are the guidelines if you are
+HesabDesk welcomes contributions from everyone. Here are the guidelines if you are
 thinking of helping us:
 
 ## Contributions

@@ -6,7 +6,7 @@
   <a href="#скриншоты">Скриншоты</a><br>
   [<a href="../README.md">English</a>] | [<a href="README-UA.md">Українська</a>] | [<a href="README-CS.md">česky</a>] | [<a href="README-ZH.md">中文</a>] | [<a href="README-HU.md">Magyar</a>] | [<a href="README-ES.md">Español</a>] | [<a href="README-FA.md">فارسی</a>] | [<a href="README-FR.md">Français</a>] | [<a href="README-DE.md">Deutsch</a>] | [<a href="README-PL.md">Polski</a>] | [<a href="README-ID.md">Indonesian</a>] | [<a href="README-FI.md">Suomi</a>] | [<a href="README-ML.md">മലയാളം</a>] | [<a href="README-JP.md">日本語</a>] | [<a href="README-NL.md">Nederlands</a>] | [<a href="README-IT.md">Italiano</a>] | [<a href="README-PTBR.md">Português (Brasil)</a>] | [<a href="README-EO.md">Esperanto</a>] | [<a href="README-KR.md">한국어</a>] | [<a href="README-AR.md">العربي</a>] | [<a href="README-VN.md">Tiếng Việt</a>] | [<a href="README-GR.md">Ελληνικά</a>]<br>
   <b>Нам нужна ваша помощь в переводе этого README, <a href="https://github.com/rustdesk/rustdesk/tree/master/src/lang">интерфейса HesabDesk</a>
-     и <a href="https://github.com/rustdesk/doc.hesabdesk.com">документации HesabDesk</a> на ваш родной язык.</b>
+     и <a href="https://github.com/rustdesk/doc.rustdesk.com">документации HesabDesk</a> на ваш родной язык.</b>
 </p>
 
 > [!Caution]
@@ -23,7 +23,7 @@
 
 HesabDesk приветствует вклад каждого. Ознакомьтесь с [`docs/CONTRIBUTING-RU.md`](CONTRIBUTING-RU.md) в начале работы для понимания.
 
-[**Как работает HesabDesk?**](https://github.com/rustdesk/rustdesk/wiki/How-does-HesabDesk-work%3F) (Документация на английском языке)
+[**Как работает HesabDesk?**](https://github.com/rustdesk/rustdesk/wiki/How-does-RustDesk-work%3F) (Документация на английском языке)
 
 [**Часто задаваемые вопросы**](https://github.com/rustdesk/rustdesk/wiki/FAQ) (Страница на английском языке)
 
@@ -59,7 +59,7 @@ HesabDesk приветствует вклад каждого. Ознакомьт
 
 - Выполните команду `cargo run`
 
-## [Сборка](https://hesabdesk.com/docs/ru/dev/build/)
+## [Сборка](https://hesabdesk.com/docs/en/dev/build/)
 
 ## Как собрать на Linux 
 
@@ -68,19 +68,19 @@ HesabDesk приветствует вклад каждого. Ознакомьт
 ```sh
 sudo apt install -y zip g++ gcc git curl wget nasm yasm libgtk-3-dev clang libxcb-randr0-dev libxdo-dev \
         libxfixes-dev libxcb-shape0-dev libxcb-xfixes0-dev libasound2-dev libpulse-dev cmake make \
-        libclang-dev ninja-build libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libpam0g-dev
+        libclang-dev ninja-build libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 ```
 
 ### openSUSE Tumbleweed
 
 ```sh
-sudo zypper install gcc-c++ git curl wget nasm yasm gcc gtk3-devel clang libxcb-devel libXfixes-devel cmake alsa-lib-devel gstreamer-devel gstreamer-plugins-base-devel xdotool-devel pam-devel
+sudo zypper install gcc-c++ git curl wget nasm yasm gcc gtk3-devel clang libxcb-devel libXfixes-devel cmake alsa-lib-devel gstreamer-devel gstreamer-plugins-base-devel xdotool-devel
 ```
 
 ### Fedora 28 (CentOS 8)
 
 ```sh
-sudo yum -y install gcc-c++ git curl wget nasm yasm gcc gtk3-devel clang libxcb-devel libxdo-devel libXfixes-devel pulseaudio-libs-devel cmake alsa-lib-devel gstreamer1-devel gstreamer1-plugins-base-devel pam-devel
+sudo yum -y install gcc-c++ git curl wget nasm yasm gcc gtk3-devel clang libxcb-devel libxdo-devel libXfixes-devel pulseaudio-libs-devel cmake alsa-lib-devel gstreamer1-devel gstreamer1-plugins-base-devel
 ```
 
 ### Arch (Manjaro)
@@ -167,10 +167,9 @@ target/release/hesabdesk
 - **[src/ui](https://github.com/rustdesk/rustdesk/tree/master/src/ui)**: графический пользовательский интерфейс на Sciter (устаревшее)
 - **[src/server](https://github.com/rustdesk/rustdesk/tree/master/src/server)**: сервисы аудио, буфера обмена, ввода, видео и сетевых подключений
 - **[src/client.rs](https://github.com/rustdesk/rustdesk/tree/master/src/client.rs)**: одноранговое соединение
-- **[src/rendezvous_mediator.rs](https://github.com/rustdesk/rustdesk/tree/master/src/rendezvous_mediator.rs)**: связь с [сервером Hesabdesk](https://github.com/rustdesk/rustdesk-server), ожидает удаленного прямого (через TCP hole punching) или ретранслируемого соединения
+- **[src/rendezvous_mediator.rs](https://github.com/rustdesk/rustdesk/tree/master/src/rendezvous_mediator.rs)**: связь с [сервером HesabDesk](https://github.com/rustdesk/rustdesk-server), ожидает удаленного прямого (через TCP hole punching) или ретранслируемого соединения
 - **[src/platform](https://github.com/rustdesk/rustdesk/tree/master/src/platform)**: специфичный для платформы код
 - **[flutter](https://github.com/rustdesk/rustdesk/tree/master/flutter)**: код Flutter для ПК-версии и мобильных устройств
-- **[flutter/web/js](https://github.com/rustdesk/rustdesk/tree/master/flutter/web/v1/js)**: JavaScript для Web-клиента Flutter
 
 ## Скриншоты
 

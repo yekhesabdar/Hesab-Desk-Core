@@ -6,15 +6,13 @@ if [ "$1" = configure ]; then
 
 	INITSYS=$(ls -al /proc/1/exe | awk -F' ' '{print $NF}' | awk -F'/' '{print $NF}')
 	ln -f -s /usr/share/hesabdesk/hesabdesk /usr/bin/hesabdesk
-	
+
 	if [ "systemd" == "$INITSYS" ]; then
 
 		if [ -e /etc/systemd/system/hesabdesk.service ]; then
-			rm /etc/systemd/system/hesabdesk.service /usr/lib/systemd/system/hesabdesk.service /usr/lib/systemd/user/hesabdesk.service >/dev/null  2>&1
+			rm -f /etc/systemd/system/hesabdesk.service /usr/lib/systemd/system/hesabdesk.service /usr/lib/systemd/user/hesabdesk.service >/dev/null  2>&1
 		fi
-		version=$(python3 -V 2>&1 | grep -Po '(?<=Python )(.+)')
-		parsedVersion=$(echo "${version//./}")
-        mkdir -p /usr/lib/systemd/system/
+		mkdir -p /usr/lib/systemd/system/
 		cp /usr/share/hesabdesk/files/systemd/hesabdesk.service /usr/lib/systemd/system/hesabdesk.service
 		# try fix error in Ubuntu 18.04
 		# Failed to reload hesabdesk.service: Unit hesabdesk.service is not loaded properly: Exec format error.

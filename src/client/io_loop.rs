@@ -10,8 +10,31 @@ use crate::{
     common::get_default_sound_input,
     ui_session_interface::{InvokeUiSession, Session},
 };
+
+// Empirical no-data window before exposing the restart reconnect state to the UI.
+// Restart msgbox text is kept as a legacy UI fallback; Flutter handles the type as a control event.
+const RESTART_REMOTE_DEVICE_NO_DATA_TIMEOUT: Duration = Duration::from_secs(5);
+const KCP_CLOSE_REASON_FLUSH_DELAY: Duration = Duration::from_millis(30);
+// Deadline for the parting close-reason send once the peer is presumed gone; KCP waits for send
+// capacity with no deadline of its own.
+const KCP_CLOSE_REASON_GONE_DEADLINE: Duration = Duration::from_millis(500);
+// Grace after ICE reports Disconnected, which it does ~5s after it stops hearing from the peer,
+// for ~8s in total. Disconnected is transient by design, so this waits out a Wi-Fi roam or a
+// sleep/wake rather than acting on the first hint.
+const WEBRTC_SUSPECT_GRACE: Duration = Duration::from_secs(3);
+// KCP gets no such hint, only how long since a packet arrived; its endpoint pings an idle peer
+// about every 2s, so this is several missed pings, and matches the 8s WebRTC arrives at.
+const KCP_PEER_SILENCE_LIMIT: Duration = Duration::from_secs(8);
 #[cfg(feature = "unix-file-copy-paste")]
 use crate::{clipboard::try_empty_clipboard_files, clipboard_file::unix_file_clip};
+use base::{
+    config::keys,
+    fs::{
+        self, can_enable_overwrite_detection, get_job, get_string, new_send_confirm,
+        DigestCheckResult, RemoveJobMeta,
+    },
+    message_proto::{permission_info::Permission, *},
+};
 #[cfg(any(
     target_os = "windows",
     all(target_os = "macos", feature = "unix-file-copy-paste")
@@ -23,12 +46,7 @@ use hbb_common::tokio::sync::mpsc::error::TryRecvError;
 use hbb_common::{
     allow_err,
     config::{self, LocalConfig, PeerConfig, TransferSerde},
-    fs::{
-        self, can_enable_overwrite_detection, get_job, get_string, new_send_confirm,
-        DigestCheckResult, RemoveJobMeta,
-    },
     get_time, log,
-    message_proto::{permission_info::Permission, *},
     protobuf::Message as _,
     rendezvous_proto::ConnType,
     timeout,
@@ -153,7 +171,6 @@ impl<T: InvokeUiSession> Remote<T> {
             }
         };
 
-        let mut last_recv_time = Instant::now();
         let mut received = false;
         let conn_type = if self.handler.is_file_transfer() {
             ConnType::FILE_TRANSFER
@@ -180,8 +197,28 @@ impl<T: InvokeUiSession> Remote<T> {
                     .lock()
                     .unwrap()
                     .set_connected();
+                let is_secured = peer.is_secured();
+                // Only WebRTC needs refining: its label names the transport that won the race,
+                // not the family ICE ended up nominating, and it is the one path where the two
+                // can disagree with the address the rendezvous observed.
+                let stream_type = if peer.webrtc_remote_ipv6().await.unwrap_or(false) {
+                    "WebRTC/IPv6"
+                } else {
+                    stream_type
+                };
                 self.handler
-                    .set_connection_type(peer.is_secured(), direct, stream_type); // flutter -> connection_ready
+                    .set_connection_type(is_secured, direct, stream_type); // flutter -> connection_ready
+                if !is_secured
+                    && !crate::common::is_direct_ip_access(&self.handler.get_id())
+                    && !client::confirm_insecure_connection(&self.handler, &mut self.receiver).await
+                {
+                    self.send_close_reason(&mut peer, "").await;
+                    if kcp.is_some() {
+                        tokio::time::sleep(KCP_CLOSE_REASON_FLUSH_DELAY).await;
+                    }
+                    self.handle_disconnected(round);
+                    return;
+                }
                 self.handler.update_direct(Some(direct));
                 if conn_type == ConnType::DEFAULT_CONN || conn_type == ConnType::VIEW_CAMERA {
                     self.handler
@@ -219,6 +256,10 @@ impl<T: InvokeUiSession> Remote<T> {
                 let mut fps_instant = Instant::now();
 
                 let _keep_it = client::hc_connection(feedback, rendezvous_server, token).await;
+                let mut last_recv_time = Instant::now();
+                let mut webrtc_suspect_since: Option<Instant> = None;
+                let mut last_rx_progress = peer.rx_progress();
+                let mut peer_gone = false;
 
                 loop {
                     tokio::select! {
@@ -244,7 +285,7 @@ impl<T: InvokeUiSession> Remote<T> {
                             } else {
                                 if self.handler.is_restarting_remote_device() {
                                     log::info!("Restart remote device");
-                                    self.handler.msgbox("restarting", "Restarting remote device", "remote_restarting_tip", "");
+                                    self.handler.msgbox("restarting", "Restarting remote device", "Connection in progress. Please wait.", "");
                                 } else {
                                     log::info!("Reset by the peer");
                                     self.handler.msgbox("error", "Connection Error", "Reset by the peer", "");
@@ -279,6 +320,43 @@ impl<T: InvokeUiSession> Remote<T> {
                             }
                         }
                         _ = status_timer.tick() => {
+                            if self.handler.is_restarting_remote_device()
+                                && last_recv_time.elapsed() >= RESTART_REMOTE_DEVICE_NO_DATA_TIMEOUT
+                            {
+                                self.handler.msgbox("restarting-show", "Restarting remote device", "Connection in progress. Please wait.", "");
+                                break;
+                            }
+                            let rx_progress = peer.rx_progress();
+                            // `None` for transports that report none, and it never changes for a
+                            // given one, so they are inert here.
+                            let progressed = rx_progress != last_rx_progress;
+                            last_rx_progress = rx_progress;
+                            if peer.webrtc_disconnected() && !progressed {
+                                webrtc_suspect_since.get_or_insert_with(Instant::now);
+                            } else {
+                                webrtc_suspect_since = None;
+                            }
+                            // Neither limit is a hard upper bound. A send is awaited inline in
+                            // this loop, so one in progress delays this tick - bounded on WebRTC
+                            // by the timeout the stream was built with, not bounded at all on
+                            // KCP. The 30s watchdog above shares the loop and the same delay.
+                            peer_gone = webrtc_suspect_since
+                                .map_or(false, |since| since.elapsed() >= WEBRTC_SUSPECT_GRACE)
+                                || kcp
+                                    .as_ref()
+                                    .and_then(|k| k.peer_silent_for())
+                                    .map_or(false, |silent| silent >= KCP_PEER_SILENCE_LIMIT);
+                            if peer_gone {
+                                log::info!("Peer stopped answering, reconnecting");
+                                #[cfg(feature = "flutter")]
+                                self.handler.msgbox("restarting-show", "Connecting...", "Connection in progress. Please wait.", "");
+                                // Sciter knows no `restarting-show` and would show a dialog that
+                                // waits for a click, where the timeout this arrives ahead of is
+                                // retryable and reconnects on its own. Keep that message for it.
+                                #[cfg(not(feature = "flutter"))]
+                                self.handler.msgbox("error", "Connection Error", "Timeout", "");
+                                break;
+                            }
                             let elapsed = fps_instant.elapsed().as_millis();
                             if elapsed < 1000 {
                                 continue;
@@ -324,17 +402,26 @@ impl<T: InvokeUiSession> Remote<T> {
                     s.send(()).ok();
                 }
                 if kcp.is_some() {
+                    // Attempted rather than skipped even here: if the loss was one-way the peer
+                    // does get it, and drops its side instead of waiting out its own timeout.
+                    if peer_gone {
+                        peer.set_send_timeout(KCP_CLOSE_REASON_GONE_DEADLINE.as_millis() as u64);
+                    }
                     // Send the close reason if it hasn't been sent yet, as KCP cannot detect the socket close event.
                     self.send_close_reason(&mut peer, "kcp").await;
                     // KCP does not send messages immediately, so wait to ensure the last message is sent.
                     // 1ms works in my test, but 30ms is more reliable.
-                    tokio::time::sleep(Duration::from_millis(30)).await;
+                    tokio::time::sleep(KCP_CLOSE_REASON_FLUSH_DELAY).await;
                 }
             }
             Err(err) => {
                 self.handler.on_establish_connection_error(err.to_string());
             }
         }
+        self.handle_disconnected(round);
+    }
+
+    fn handle_disconnected(&self, round: u32) {
         // set_disconnected_ok is used to check if new connection round is started.
         let _set_disconnected_ok = self
             .handler
@@ -350,6 +437,8 @@ impl<T: InvokeUiSession> Remote<T> {
 
         #[cfg(any(target_os = "windows", feature = "unix-file-copy-paste"))]
         if self.handler.is_default() && _set_disconnected_ok {
+            // Linux client cleanup runs synchronously in try_stop_clipboard() before FUSE is
+            // unmounted. Keep this async path for other file-clipboard platforms.
             crate::clipboard::try_empty_clipboard_files(ClipboardSide::Client, self.client_conn_id);
         }
     }
@@ -381,7 +470,7 @@ impl<T: InvokeUiSession> Remote<T> {
                             || !self.is_connected
                             || !(server_file_transfer_enabled && file_transfer_enabled));
                     log::debug!(
-                        "Process clipboard message from system, stop: {}, is_stopping_allowed: {}, view_only: {}, server_file_transfer_enabled: {}, file_transfer_enabled: {}",
+                        "Process clipboard message from system, view_only: {}, stop: {}, is_stopping_allowed: {}, server_file_transfer_enabled: {}, file_transfer_enabled: {}",
                         view_only, stop, is_stopping_allowed, server_file_transfer_enabled, file_transfer_enabled
                     );
                     if stop {
@@ -509,6 +598,9 @@ impl<T: InvokeUiSession> Remote<T> {
                             } else {
                                 log::debug!("Failed to record local audio channel: {}", err);
                             }
+                            // Both arms fall through with nothing else in this loop blocking, so
+                            // without a pause the thread spun a core for the whole voice call.
+                            std::thread::sleep(std::time::Duration::from_millis(1));
                         }
                     }
                 }
@@ -549,6 +641,19 @@ impl<T: InvokeUiSession> Remote<T> {
                 self.check_clipboard_file_context();
             }
             Data::Message(msg) => {
+                // The Flutter clipboard broadcast is process-wide, so a clipboard can reach this
+                // round's queue before the round has logged in; it is dropped here, on the round
+                // itself.
+                #[cfg(feature = "flutter")]
+                if !self.is_connected
+                    && matches!(
+                        msg.union.as_ref(),
+                        Some(message::Union::Clipboard(_))
+                            | Some(message::Union::MultiClipboards(_))
+                    )
+                {
+                    return true;
+                }
                 match &msg.union {
                     Some(message::Union::Misc(misc)) => match misc.union {
                         Some(misc::Union::RefreshVideo(_)) => {
@@ -586,7 +691,6 @@ impl<T: InvokeUiSession> Remote<T> {
                         file_num,
                         include_hidden,
                         is_remote,
-                        Vec::new(),
                         od,
                     ));
                     allow_err!(
@@ -659,7 +763,6 @@ impl<T: InvokeUiSession> Remote<T> {
                         file_num,
                         include_hidden,
                         is_remote,
-                        Vec::new(),
                         od,
                     );
                     job.is_last_job = true;
@@ -845,19 +948,7 @@ impl<T: InvokeUiSession> Remote<T> {
                 }
             }
             Data::CancelJob(id) => {
-                let mut msg_out = Message::new();
-                let mut file_action = FileAction::new();
-                file_action.set_cancel(FileTransferCancel {
-                    id: id,
-                    ..Default::default()
-                });
-                msg_out.set_file_action(file_action);
-                allow_err!(peer.send(&msg_out).await);
-                if let Some(job) = fs::remove_job(id, &mut self.write_jobs) {
-                    job.remove_download_file();
-                }
-                let _ = fs::remove_job(id, &mut self.read_jobs);
-                self.remove_jobs.remove(&id);
+                self.cancel_transfer_job(id, peer).await;
             }
             Data::RemoveDir((id, path)) => {
                 let mut msg_out = Message::new();
@@ -1053,6 +1144,22 @@ impl<T: InvokeUiSession> Remote<T> {
         }
     }
 
+    async fn cancel_transfer_job(&mut self, id: i32, peer: &mut Stream) {
+        let mut msg_out = Message::new();
+        let mut file_action = FileAction::new();
+        file_action.set_cancel(FileTransferCancel {
+            id,
+            ..Default::default()
+        });
+        msg_out.set_file_action(file_action);
+        allow_err!(peer.send(&msg_out).await);
+        if let Some(job) = fs::remove_job(id, &mut self.write_jobs) {
+            job.remove_download_file();
+        }
+        let _ = fs::remove_job(id, &mut self.read_jobs);
+        self.remove_jobs.remove(&id);
+    }
+
     pub async fn sync_jobs_status_to_local(&mut self) -> bool {
         if !self.is_connected {
             return false;
@@ -1076,6 +1183,9 @@ impl<T: InvokeUiSession> Remote<T> {
     }
 
     async fn send_toggle_virtual_display_msg(&self, peer: &mut Stream) {
+        if self.handler.is_view_camera() {
+            return;
+        }
         if !self.peer_info.is_support_virtual_display() {
             return;
         }
@@ -1097,6 +1207,9 @@ impl<T: InvokeUiSession> Remote<T> {
     }
 
     async fn send_toggle_privacy_mode_msg(&self, peer: &mut Stream) {
+        if self.handler.is_view_camera() {
+            return;
+        }
         let lc = self.handler.lc.read().unwrap();
         if lc.version >= hbb_common::get_version_number("1.2.4")
             && lc.get_toggle_option("privacy-mode")
@@ -1316,9 +1429,13 @@ impl<T: InvokeUiSession> Remote<T> {
                     }
                 }
                 Some(message::Union::Hash(hash)) => {
-                    self.handler
+                    if !self
+                        .handler
                         .handle_hash(&self.handler.password.clone(), hash, peer)
-                        .await;
+                        .await
+                    {
+                        return false;
+                    }
                 }
                 Some(message::Union::LoginResponse(lr)) => match lr.union {
                     Some(login_response::Union::Error(err)) => {
@@ -1396,14 +1513,6 @@ impl<T: InvokeUiSession> Remote<T> {
 
                             #[cfg(all(feature = "flutter", feature = "unix-file-copy-paste"))]
                             crate::flutter::update_file_clipboard_required();
-
-                            // on connection established client
-                            #[cfg(all(feature = "flutter", feature = "plugin_framework"))]
-                            #[cfg(not(any(target_os = "android", target_os = "ios")))]
-                            crate::plugin::handle_listen_event(
-                                crate::plugin::EVENT_ON_CONN_CLIENT.to_owned(),
-                                self.handler.get_id(),
-                            );
                         }
 
                         if self.handler.is_file_transfer() {
@@ -1415,7 +1524,11 @@ impl<T: InvokeUiSession> Remote<T> {
                     _ => {}
                 },
                 Some(message::Union::CursorData(cd)) => {
-                    self.handler.set_cursor_data(cd);
+                    let id = cd.id;
+                    match decode_cursor_data(cd) {
+                        Ok(cd) => self.handler.set_cursor_data(cd),
+                        Err(err) => log::warn!("Rejected cursor {id}: {err}"),
+                    }
                 }
                 Some(message::Union::CursorId(id)) => {
                     self.handler.set_cursor_id(id.to_string());
@@ -1424,7 +1537,23 @@ impl<T: InvokeUiSession> Remote<T> {
                     self.handler.set_cursor_position(cp);
                 }
                 Some(message::Union::Clipboard(cb)) => {
-                    if !self.handler.lc.read().unwrap().disable_clipboard.v {
+                    let clipboard_allowed = {
+                        let lc = self.handler.lc.read().unwrap();
+                        !lc.disable_clipboard.v && !lc.view_only.v
+                    };
+                    if clipboard_allowed {
+                        #[cfg(all(
+                            feature = "flutter",
+                            not(any(target_os = "android", target_os = "ios"))
+                        ))]
+                        if self.handler.is_text_clipboard_required()
+                            && crate::clipboard::is_sync_clipboard_between_sessions_enabled()
+                        {
+                            let mut msg = Message::new();
+                            msg.set_clipboard(cb.clone());
+                            let session_id = self.handler.lc.read().unwrap().session_id;
+                            crate::flutter::send_clipboard_msg_to_other_sessions(msg, session_id);
+                        }
                         #[cfg(not(any(target_os = "android", target_os = "ios")))]
                         update_clipboard(vec![cb], ClipboardSide::Client);
                         #[cfg(target_os = "ios")]
@@ -1443,9 +1572,42 @@ impl<T: InvokeUiSession> Remote<T> {
                     }
                 }
                 Some(message::Union::MultiClipboards(_mcb)) => {
-                    if !self.handler.lc.read().unwrap().disable_clipboard.v {
+                    let clipboard_allowed = {
+                        let lc = self.handler.lc.read().unwrap();
+                        !lc.disable_clipboard.v && !lc.view_only.v
+                    };
+                    if clipboard_allowed {
+                        #[cfg(all(
+                            feature = "flutter",
+                            not(any(target_os = "android", target_os = "ios"))
+                        ))]
+                        if self.handler.is_text_clipboard_required()
+                            && crate::clipboard::is_sync_clipboard_between_sessions_enabled()
+                        {
+                            let mut msg = Message::new();
+                            msg.set_multi_clipboards(_mcb.clone());
+                            let session_id = self.handler.lc.read().unwrap().session_id;
+                            crate::flutter::send_clipboard_msg_to_other_sessions(msg, session_id);
+                        }
                         #[cfg(not(any(target_os = "android", target_os = "ios")))]
                         update_clipboard(_mcb.clipboards, ClipboardSide::Client);
+                        #[cfg(target_os = "ios")]
+                        {
+                            if let Some(cb) = _mcb
+                                .clipboards
+                                .iter()
+                                .find(|c| c.format.enum_value() == Ok(ClipboardFormat::Text))
+                            {
+                                let content = if cb.compress {
+                                    hbb_common::compress::decompress(&cb.content)
+                                } else {
+                                    cb.content.to_vec()
+                                };
+                                if let Ok(content) = String::from_utf8(content) {
+                                    self.handler.clipboard(content);
+                                }
+                            }
+                        }
                         #[cfg(target_os = "android")]
                         crate::clipboard::handle_msg_multi_clipboards(_mcb);
                     }
@@ -1470,14 +1632,43 @@ impl<T: InvokeUiSession> Remote<T> {
                                     fs::transform_windows_path(&mut entries);
                                 }
                             }
-                            self.handler
-                                .update_folder_files(fd.id, &entries, fd.path, false, false);
+                            // We cannot call cancel_transfer_job/handle_job_status while holding
+                            // a mutable borrow from fs::get_job(&mut self.write_jobs), so defer
+                            // the error handling until after the borrow scope ends.
+                            let mut set_files_err = None;
                             if let Some(job) = fs::get_job(fd.id, &mut self.write_jobs) {
                                 log::info!("job set_files: {:?}", entries);
-                                job.set_files(entries);
-                                job.set_finished_size_on_resume();
+                                if let Err(err) = job.set_files(entries) {
+                                    set_files_err = Some(err.to_string());
+                                } else {
+                                    job.set_finished_size_on_resume();
+                                    self.handler.update_folder_files(
+                                        fd.id,
+                                        job.files(),
+                                        fd.path,
+                                        false,
+                                        false,
+                                    );
+                                }
                             } else if let Some(job) = self.remove_jobs.get_mut(&fd.id) {
+                                // Intentionally keep raw entries here:
+                                // - remote remove flow executes deletions on peer side;
+                                // - local remove flow is populated from local get_recursive_files().
                                 job.files = entries;
+                                self.handler
+                                    .update_folder_files(fd.id, &job.files, fd.path, false, false);
+                            } else {
+                                self.handler
+                                    .update_folder_files(fd.id, &entries, fd.path, false, false);
+                            }
+                            if let Some(err) = set_files_err {
+                                log::warn!(
+                                    "Rejected unsafe file list from remote peer for job {}: {}",
+                                    fd.id,
+                                    err
+                                );
+                                self.cancel_transfer_job(fd.id, peer).await;
+                                self.handle_job_status(fd.id, -1, Some(err));
                             }
                         }
                         Some(file_response::Union::Digest(digest)) => {
@@ -1749,6 +1940,9 @@ impl<T: InvokeUiSession> Remote<T> {
                             Ok(Permission::BlockInput) => {
                                 self.handler.set_permission("block_input", p.enabled);
                             }
+                            Ok(Permission::PrivacyMode) => {
+                                self.handler.set_permission("privacy_mode", p.enabled);
+                            }
                             _ => {}
                         }
                     }
@@ -1872,29 +2066,23 @@ impl<T: InvokeUiSession> Remote<T> {
                             );
                         }
                     }
+                    #[cfg(feature = "flutter")]
+                    #[cfg(not(any(target_os = "android", target_os = "ios")))]
                     Some(misc::Union::SwitchBack(_)) => {
-                        #[cfg(feature = "flutter")]
-                        self.handler.switch_back(&self.handler.get_id());
-                    }
-                    #[cfg(all(feature = "flutter", feature = "plugin_framework"))]
-                    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-                    Some(misc::Union::PluginRequest(p)) => {
-                        allow_err!(crate::plugin::handle_server_event(
-                            &p.id,
-                            &self.handler.get_id(),
-                            &p.content
-                        ));
-                        // to-do: show message box on UI when error occurs?
-                    }
-                    #[cfg(all(feature = "flutter", feature = "plugin_framework"))]
-                    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-                    Some(misc::Union::PluginFailure(p)) => {
-                        let name = if p.name.is_empty() {
-                            "plugin".to_string()
+                        let allow_switch_back = self
+                            .handler
+                            .lc
+                            .write()
+                            .unwrap()
+                            .consume_switch_back_permission();
+                        if allow_switch_back {
+                            self.handler.switch_back(&self.handler.get_id());
                         } else {
-                            p.name
-                        };
-                        self.handler.msgbox("custom-nocancel", &name, &p.msg, "");
+                            log::warn!(
+                                "Ignored unsolicited SwitchBack from {}",
+                                self.handler.get_id()
+                            );
+                        }
                     }
                     Some(misc::Union::SupportedEncoding(e)) => {
                         log::info!("update supported encoding:{:?}", e);
@@ -1920,9 +2108,8 @@ impl<T: InvokeUiSession> Remote<T> {
                         #[cfg(target_os = "windows")]
                         Ok(file_transfer_send_request::FileType::Printer) => {
                             #[cfg(feature = "flutter")]
-                            let action = LocalConfig::get_option(
-                                config::keys::OPTION_PRINTER_INCOMING_JOB_ACTION,
-                            );
+                            let action =
+                                LocalConfig::get_option(keys::OPTION_PRINTER_INCOMING_JOB_ACTION);
                             #[cfg(not(feature = "flutter"))]
                             let action = "";
                             if action == "dismiss" {
@@ -1931,7 +2118,7 @@ impl<T: InvokeUiSession> Remote<T> {
                                 let id = fs::get_next_job_id();
                                 #[cfg(feature = "flutter")]
                                 let allow_auto_print = LocalConfig::get_bool_option(
-                                    config::keys::OPTION_PRINTER_ALLOW_AUTO_PRINT,
+                                    keys::OPTION_PRINTER_ALLOW_AUTO_PRINT,
                                 );
                                 #[cfg(not(feature = "flutter"))]
                                 let allow_auto_print = false;
@@ -1939,9 +2126,7 @@ impl<T: InvokeUiSession> Remote<T> {
                                     let printer_name = if action == "" {
                                         "".to_string()
                                     } else {
-                                        LocalConfig::get_option(
-                                            config::keys::OPTION_PRINTER_SELECTED_NAME,
-                                        )
+                                        LocalConfig::get_option(keys::OPTION_PRINTER_SELECTED_NAME)
                                     };
                                     self.handler.printer_response(id, _s.path, printer_name);
                                 } else {
@@ -2007,7 +2192,7 @@ impl<T: InvokeUiSession> Remote<T> {
                         .handle_screenshot_resp(response.sid, response.msg);
                 }
                 Some(message::Union::TerminalResponse(response)) => {
-                    use hbb_common::message_proto::terminal_response::Union;
+                    use base::message_proto::terminal_response::Union;
                     if let Some(Union::Opened(opened)) = &response.union {
                         if opened.success && !opened.service_id.is_empty() {
                             let mut lc = self.handler.lc.write().unwrap();
@@ -2176,12 +2361,8 @@ impl<T: InvokeUiSession> Remote<T> {
                     .msgbox("custom-error", "Privacy mode", "Peer denied", "");
                 self.update_privacy_mode(impl_key, false);
             }
-            back_notification::PrivacyModeState::PrvOnFailedPlugin => {
-                self.handler
-                    .msgbox("custom-error", "Privacy mode", "Please install plugins", "");
-                self.update_privacy_mode(impl_key, false);
-            }
-            back_notification::PrivacyModeState::PrvOnFailed => {
+            back_notification::PrivacyModeState::PrvOnFailedPlugin
+            | back_notification::PrivacyModeState::PrvOnFailed => {
                 self.handler.msgbox(
                     "custom-error",
                     "Privacy mode",
@@ -2235,14 +2416,10 @@ impl<T: InvokeUiSession> Remote<T> {
     }
 
     #[cfg(any(target_os = "windows", feature = "unix-file-copy-paste"))]
-    async fn handle_cliprdr_msg(
-        &mut self,
-        clip: hbb_common::message_proto::Cliprdr,
-        _peer: &mut Stream,
-    ) {
+    async fn handle_cliprdr_msg(&mut self, clip: base::message_proto::Cliprdr, _peer: &mut Stream) {
         log::debug!("handling cliprdr msg from server peer");
         #[cfg(feature = "flutter")]
-        if let Some(hbb_common::message_proto::cliprdr::Union::FormatList(_)) = &clip.union {
+        if let Some(base::message_proto::cliprdr::Union::FormatList(_)) = &clip.union {
             if self.client_conn_id
                 != clipboard::get_client_conn_id(&crate::flutter::get_cur_peer_id()).unwrap_or(0)
             {
@@ -2352,8 +2529,7 @@ impl<T: InvokeUiSession> Remote<T> {
         );
         self.video_threads.insert(display, video_thread);
         if self.video_threads.len() == 1 {
-            let auto_record =
-                LocalConfig::get_bool_option(config::keys::OPTION_ALLOW_AUTO_RECORD_OUTGOING);
+            let auto_record = LocalConfig::get_bool_option(keys::OPTION_ALLOW_AUTO_RECORD_OUTGOING);
             self.handler.lc.write().unwrap().record_state = auto_record;
             self.update_record_state();
         }
@@ -2384,6 +2560,47 @@ impl<T: InvokeUiSession> Remote<T> {
         msg.set_misc(misc);
         self.sender.send(Data::Message(msg)).ok();
     }
+}
+
+// Both UI handlers receive validated, uncompressed RGBA from the receive loop.
+fn decode_cursor_data(data: CursorData) -> hbb_common::ResultType<CursorData> {
+    use hbb_common::{anyhow::anyhow, bail};
+
+    // Limit decoded cursor data to 1 MiB before JSON serialization.
+    const MAX_CURSOR_SIZE: i32 = 512;
+    const RGBA_CHANNELS: usize = 4;
+
+    let mut cd = data;
+    if !(1..=MAX_CURSOR_SIZE).contains(&cd.width) || !(1..=MAX_CURSOR_SIZE).contains(&cd.height) {
+        bail!("invalid source size {}x{}", cd.width, cd.height);
+    }
+    if !(0..cd.width).contains(&cd.hotx) || !(0..cd.height).contains(&cd.hoty) {
+        bail!(
+            "hotspot ({},{}) is outside the cursor image",
+            cd.hotx,
+            cd.hoty
+        );
+    }
+    let expected = (cd.width as usize)
+        .checked_mul(cd.height as usize)
+        .and_then(|pixels| pixels.checked_mul(RGBA_CHANNELS))
+        .ok_or_else(|| anyhow!("cursor RGBA size overflow"))?;
+    let max_compressed_size = zstd::zstd_safe::compress_bound(expected);
+    if cd.colors.len() > max_compressed_size {
+        bail!(
+            "compressed cursor data too large: {} bytes (limit {max_compressed_size})",
+            cd.colors.len()
+        );
+    }
+    let colors = zstd::bulk::decompress(&cd.colors, expected)?;
+    if colors.len() != expected {
+        bail!(
+            "invalid RGBA length: expected {expected}, got {}",
+            colors.len()
+        );
+    }
+    cd.colors = colors.into();
+    Ok(cd)
 }
 
 struct RemoveJob {
@@ -2437,5 +2654,74 @@ impl Drop for VideoThread {
     fn drop(&mut self) {
         // since channels are buffered, messages sent before the disconnect will still be properly received.
         *self.discard_queue.write().unwrap() = true;
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "flutter")]
+mod tests {
+    use super::*;
+    use crate::flutter::FlutterHandler;
+
+    /// A round's `Remote` over a loopback pair, before any login: what it sends to `peer`
+    /// arrives at `far`.
+    async fn remote_and_peer() -> (Remote<FlutterHandler>, Stream, Stream) {
+        let listener = hbb_common::tcp::new_listener("127.0.0.1:0", false)
+            .await
+            .unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (peer, accepted) = tokio::join!(
+            hbb_common::socket_client::connect_tcp(addr.to_string(), 3000),
+            listener.accept()
+        );
+        let (accepted, far_addr) = accepted.unwrap();
+        let far = Stream::Tcp(hbb_common::tcp::FramedStream::from(accepted, far_addr));
+        let (sender, receiver) = mpsc::unbounded_channel::<Data>();
+        let remote = Remote::new(Session::<FlutterHandler>::default(), receiver, sender);
+        (remote, peer.unwrap(), far)
+    }
+
+    async fn arrives(far: &mut Stream) -> bool {
+        matches!(hbb_common::timeout(300, far.next()).await, Ok(Some(Ok(_))))
+    }
+
+    fn clipboard() -> Data {
+        let mut msg = Message::new();
+        msg.set_clipboard(Clipboard {
+            content: b"copied while this login was pending".to_vec().into(),
+            ..Default::default()
+        });
+        Data::Message(msg)
+    }
+
+    fn auth_2fa() -> Data {
+        let mut msg = Message::new();
+        msg.set_auth_2fa(Auth2FA {
+            code: "123456".to_owned(),
+            ..Default::default()
+        });
+        Data::Message(msg)
+    }
+
+    // A clipboard queued before this round's login stays here; what the login itself sends
+    // through the same queue does not.
+    #[tokio::test]
+    async fn a_clipboard_queued_before_this_rounds_login_is_dropped() {
+        let (mut remote, mut peer, mut far) = remote_and_peer().await;
+        assert!(!remote.is_connected);
+        assert!(remote.handle_msg_from_ui(clipboard(), &mut peer).await);
+        assert!(
+            !arrives(&mut far).await,
+            "a clipboard went out before the login"
+        );
+        assert!(remote.handle_msg_from_ui(auth_2fa(), &mut peer).await);
+        assert!(arrives(&mut far).await, "the 2FA code was held back");
+
+        remote.is_connected = true;
+        assert!(remote.handle_msg_from_ui(clipboard(), &mut peer).await);
+        assert!(
+            arrives(&mut far).await,
+            "a clipboard after the login was held back"
+        );
     }
 }

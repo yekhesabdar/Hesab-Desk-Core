@@ -23,8 +23,8 @@
         <key>WorkingDirectory</key>
         <string>/Applications/HesabDesk.app/Contents/MacOS/</string>
         <key>StandardErrorPath</key>
-        <string>/tmp/hesabdesk_service.err</string>
+        <string>/var/log/hesabdesk_service.err</string>
         <key>StandardOutPath</key>
-        <string>/tmp/hesabdesk_service.out</string>
+        <string>/var/log/hesabdesk_service.out</string>
     </dict>
 </plist>
