@@ -622,7 +622,9 @@ jobs:
             ./SignOutput/hesabdesk-*.exe
 
   build-hesabdesk-ios:
-    if: ${{ inputs.upload-artifact }}
+    # macOS runners bill at 10x, which one full run cannot fit into the org's
+    # free-plan allowance. To restore: if: ${{ inputs.upload-artifact }}
+    if: false
     name: build hesabdesk ios ipa
     runs-on: ${{ matrix.job.os }}
     needs: [generate-bridge]
@@ -744,6 +746,9 @@ jobs:
 
 
   build-for-macOS:
+    # macOS runners bill at 10x, which one full run cannot fit into the org's
+    # free-plan allowance. To restore: delete the `if` line below.
+    if: false
     name: ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}
     needs: [generate-bridge]
