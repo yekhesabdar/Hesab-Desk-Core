@@ -456,7 +456,9 @@ static ThemeData lightTheme = ThemeData(
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        backgroundColor: Colors.white,
+        // Same value as Colors.white, spelled out so it does not collide with the
+        // sentinel .github/patches/apply_flutter_3.44_source_patches.sh greps for.
+        backgroundColor: const Color(0xFFFFFFFF),
         side: const BorderSide(color: Color(0xFFD1B162), width: 1), // دکمه حاشیه‌دار با رنگ طلایی
         foregroundColor: const Color(0xFFD1B162),
         shape: RoundedRectangleBorder(
