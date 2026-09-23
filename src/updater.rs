@@ -662,7 +662,7 @@ mod tests {
     #[test]
     fn update_download_file_accepts_expected_github_asset_urls() {
         let file = get_download_file_from_url(
-            "https://github.com/rustdesk/rustdesk/releases/download/1.4.0/rustdesk-1.4.0-x86_64.dmg",
+            "https://github.com/hesabdesk/hesabdesk/releases/download/1.4.0/hesabdesk-1.4.0-x86_64.dmg",
         )
         .expect("valid GitHub release asset URL");
 
@@ -675,16 +675,16 @@ mod tests {
     #[test]
     fn update_download_file_rejects_untrusted_or_malformed_urls() {
         for url in [
-            "http://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
+            "http://github.com/hesabdesk/hesabdesk/releases/download/1/hesabdesk.exe",
             "https://example.com/hesabdesk.exe",
             "https://github.com/other/project/releases/download/1/hesabdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/nested/rustdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/C:hesabdesk.exe",
-            "https://user@github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
+            "https://github.com/hesabdesk/hesabdesk/releases/download/1/",
+            "https://github.com/hesabdesk/hesabdesk/releases/download/1/nested/hesabdesk.exe",
+            "https://github.com/hesabdesk/hesabdesk/releases/download/1/C:hesabdesk.exe",
+            "https://user@github.com/hesabdesk/hesabdesk/releases/download/1/hesabdesk.exe",
             "https://github.com:443/hesabdesk/hesabdesk/releases/download/1/hesabdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe?download=1",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe#download",
+            "https://github.com/hesabdesk/hesabdesk/releases/download/1/hesabdesk.exe?download=1",
+            "https://github.com/hesabdesk/hesabdesk/releases/download/1/hesabdesk.exe#download",
             "not a url",
         ] {
             assert!(get_download_file_from_url(url).is_none(), "{url}");
